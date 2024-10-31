@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Scene 2: Picking a Major</title>
+    <style>
+        body { margin: 0; }
+        #audioButton {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <button id="audioButton">Play Audio</button>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script>
+        // Initialize Scene, Camera, and Renderer
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Add Audio Listener to Camera
+        const listener = new THREE.AudioListener();
+        camera.add(listener);
+
+        // Create Audio Object
+        const backgroundAudio = new THREE.Audio(listener);
+        const audioLoader = new THREE.AudioLoader();
+
+        // Load and set audio (don't auto-play here)
+        audioLoader.load('w2.mp3', (buffer) => {
+            backgroundAudio.setBuffer(buffer);
+            backgroundAudio.setLoop(true);
+            backgroundAudio.setVolume(0.5);
+        });
+
+        // Play/Pause Audio on Button Click
+        const audioButton = document.getElementById('audioButton');
+        audioButton.addEventListener('click', () => {
+            if (backgroundAudio.isPlaying) {
+                backgroundAudio.pause();
+                audioButton.textContent = "Play Audio";
+            } else {
+                backgroundAudio.play();
+                audioButton.textContent = "Pause Audio";
+            }
+        });
+
+        // Lighting for environment
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(20, 20, 5).normalize();
+        scene.add(directionalLight);
+
+        const ambientLight = new THREE.AmbientLight(0x404040, 2);
+        scene.add(ambientLight);
+
+        // Floor and wall materials
+        const wallMaterial = new THREE.MeshStandardMaterial({ color: 0xC4A484 });
+        const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x6F4E37	 });
+
+        // // Floor Plane
+        // const floor = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), floorMaterial);
+        // floor.rotation.x = -Math.PI / 2; // Rotate to lie flat
+        // floor.position.y = -80;
+        // scene.add(floor);
+
+        // // Wall Planes
+        // const wall1 = new THREE.Mesh(new THREE.PlaneGeometry(200, 100), wallMaterial);
+        // wall1.position.set(0, -30, -100); // Position back wall
+        // scene.add(wall1);
+
+        // const wall2 = new THREE.Mesh(new THREE.PlaneGeometry(200, 100), wallMaterial);
+        // wall2.position.set(-100, -30, 0); // Position left wall
+        // wall2.rotation.y = Math.PI / 2; // Rotate left wall
+        // scene.add(wall2);
+
+        // const wall3 = new THREE.Mesh(new THREE.PlaneGeometry(200, 100), wallMaterial);
+        // wall3.position.set(100, -30, 0); // Position right wall
+        // wall3.rotation.y = -Math.PI / 2; // Rotate right wall
+        // scene.add(wall3);
+
+        // const wall4 = new THREE.Mesh(new THREE.PlaneGeometry(200, 100), wallMaterial);
+        // wall4.position.set(0, -30, 100); // Position front wall
+        // wall4.rotation.y = Math.PI; // Rotate front wall
+        // scene.add(wall4);
+
+        // Load hallway model
+        const loader = new THREE.GLTFLoader();
+        let avatars = [];
+
+        const loadAvatar = (url, position, scale, rotation) => {
+            return new Promise((resolve) => {
+                loader.load(url, (gltf) => {
+                    const avatar = gltf.scene;
+                    avatar.position.copy(position);
+                    avatar.scale.set(scale, scale, scale);
+                    avatar.rotation.copy(rotation);
+                    avatars.push(avatar);
+                    scene.add(avatar);
+                    resolve(avatar);
+                });
+            });
+        };
+
+        const avatarPromises = [
+            loadAvatar('male_low_poly_game_character.glb', new THREE.Vector3(-28, -70, -59), 50, new THREE.Euler(0,  Math.PI / 2.5, 0)),
+            loadAvatar('doctor_exam_room.glb', new THREE.Vector3(20, -180, -30), 10, new THREE.Euler(0, 1.5, 0)),
+            loadAvatar('female_low_poly_game_character.glb', new THREE.Vector3(-28, -50, -19), 50, new THREE.Euler(0, Math.PI / 2, 0)), 
+            loadAvatar('male_character_ps1-style.glb', new THREE.Vector3(38, -50, -19), 50, new THREE.Euler(0, Math.PI/ -2, 0))
+        ];
+
+        // Camera controls
+        camera.position.set(15, 25, 50);
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+
+            // Subtle movement for avatars
+            avatars.forEach((avatar, index) => {
+                avatar.position.y = -80 + Math.sin(Date.now() * 0.0005 + index) * 1.2;
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
